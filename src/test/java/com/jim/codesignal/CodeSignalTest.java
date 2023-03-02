@@ -2,14 +2,14 @@ package com.jim.codesignal;
 
 import org.junit.jupiter.api.Test;
 
+import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.IntStream;
 
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class CodeSignalTest {
 
@@ -257,7 +257,9 @@ public class CodeSignalTest {
     }
 
     public Integer calculateAvg(List<Integer> values) {
-        int sum = values.stream().mapToInt(Integer::intValue).sum();
+        int sum = values.stream()
+                .mapToInt(Integer::intValue)
+                .sum();
         return sum / values.size();
     }
 
@@ -305,7 +307,9 @@ public class CodeSignalTest {
 //               result[idx] = sortedListIter.next();
 //        }
 
-//        AtomicInteger idx = new AtomicInteger(0);
+//      reference: https://stackoverflow.com/questions/28790784/java-8-preferred-way-to-count-iterations-of-a-lambda
+//        AtomicInteger idx = new AtomicInteger(0); then use idx.getAndIncrement() inside the lamda
+        // Also, https://commons.apache.org/proper/commons-lang/javadocs/api-release/org/apache/commons/lang3/mutable/MutableInt.html
         var wrapper = new Object() {
             int idx = 0;
         };
@@ -400,6 +404,27 @@ class ListToMap {
             return false;
 
         return !entity.getChildren().isEmpty();
+    }
+
+    @Test
+    public void reverseChars() throws ParseException {
+        CodeSignal cs = new CodeSignal();
+
+        String s1 = "(bar)";
+        String s1Expected = "rab";
+        assertEquals(s1Expected, cs.reverseCharsInParentheses(s1));
+
+        String s2 = "foo(bar)baz";
+        String s2Expected = "foorabbaz";
+        assertEquals(s2Expected, cs.reverseCharsInParentheses(s2));
+
+//        String s4 = "foo(bar)baz(blim)";
+//        String s4Expected = "foorabbazmilb";
+//        assertEquals(s4Expected,cs.reverseCharsInParentheses(s4));
+
+        String s3 = "foo(bar(baz))blim";        // foo(barzab)blim -> foobazrabblim
+        String s3Expected = "foobazrabblim";
+        assertEquals(s3Expected, cs.reverseCharsInParentheses(s3));
     }
 }
 
