@@ -1,125 +1,85 @@
 package com.jim.codesignal;
 
 import java.text.ParseException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.Optional;
 
 public class CodeSignal {
     private static final String INVALID_STRING = "No Matching Close Parenthesis for Open Paren at position %s";
 
     public String reverseCharsInParentheses(String s) throws ParseException {
-        // create a Map where key=count of open close paren pairs
-        // and value is a Record containing both open and close paren positions
-        Map<Integer, MatchParens> parenMap = new HashMap<>();
-        int searchPos = 0, cnt = 0;
-        boolean isNested = false;
-
-        while ((searchPos = s.indexOf("(", searchPos)) != -1) {
-
-//            MatchParens matchParens = findMatchingCloseParenPos(s, searchPos, isNested).orElseThrow(() -> new ParseException(msg, -1));
-            Optional<MatchParens> optMatchParens = findMatchingCloseParenPos(s, searchPos, isNested);
-            if (optMatchParens.isPresent()) {
-                MatchParens matchParens = optMatchParens.get();
-                parenMap.put(cnt++, matchParens);
-                if (matchParens.isNested()) {
-//                    if (isNestedCnt == 1) {
-//                        searchPos = matchParens.closeParenPos();
-//                        // only process 1 level deep nesting
-//                        isNested = false;
-//                    } else {
-                    searchPos--;
-                    isNested = true;
-//                        isNestedCnt++;
-//                    }
-                } else
-//                    searchPos++;
-                    searchPos = matchParens.closeParenPos();
-            } else {
-                String msg = String.format(INVALID_STRING, searchPos);  // TODO, probably better way since only for exception
-                throw new ParseException(msg, -1);
-            }
+        // and value is a Record containing the reversed string between the parens and if it is nested
+        int prevClosePPos = 0;
+        int openPPos = s.indexOf("(");
+        if (openPPos == -1) {
+            throw new ParseException(INVALID_STRING, openPPos);
         }
 
-        // TODO iterate on parenMap and rebuild the string by recursively calling const + reverse portions
-        StringBuilder result = new StringBuilder();
-        Iterator<MatchParens> iter = parenMap.values().iterator();
-        int previousCloseParenPos = 0;
-        while (iter.hasNext()) {
-            MatchParens matchParens = iter.next();
-            String constPart, revSegment, constBackPart;
-            if (result.isEmpty()) {
-                constPart = s.substring(previousCloseParenPos, matchParens.openParenPos());
-                revSegment = new StringBuilder(s.substring(matchParens.openParenPos() + 1, matchParens.closeParenPos()))
-                        .reverse()
-                        .toString();
+        StringBuffer result = new StringBuffer(s.substring(0, openPPos));
 
-                constBackPart = s.substring(matchParens.closeParenPos() + 1);
-                result.append(constPart).append(revSegment).append(constBackPart);
-            } else {
-                constPart = result.substring(0, matchParens.openParenPos());
-                revSegment = new StringBuilder(result.substring(matchParens.openParenPos() + 1, result.indexOf(")")))
-                        .reverse()
-                        .toString();
-                constBackPart = result.substring(previousCloseParenPos);
-                result = new StringBuilder(constPart + revSegment + constBackPart);
-            }
-//            result.append(constPart).append(revSegment).append(constBackPart);
+        do {
+            // TODO need to set isNested based on the next parenthesis. If the next parenthesis is open than isNested = true
+            //  and openPPos becomes the position of the nested open parenthesis.
+            //  matchParens = processStringForNestedParens(s, openPPos)
+            MatchParens matchParens = processStringForNestedParens(s, openPPos).get();
 
-            if (matchParens.isNested())
-                previousCloseParenPos = matchParens.closeParenPos();
-            else
-                previousCloseParenPos = matchParens.closeParenPos() + 1;
-        }
-        // get the final portion of the string following the last close paren.
-//        String backConstPart = s.substring(parenMap.get(parenMap.size() - 1).closeParenPos() + 1);
-//        result.append(backConstPart);
+            Optional<MatchParens> optionalMatchParens = findMatchingCloseParenAndReverse(matchParens);
+            // TODO - when isNested==true, we need the nested reversed chars and go back to beginning of the loop, do NOT append to result
+            matchParens = optionalMatchParens.get();
+            result.append(matchParens.reversed());
+
+            prevClosePPos = matchParens.startSearchPos();  // 1 char past the close paren
+//            if (((s.indexOf("(", openPPos)) == -1) && (!s.substring(openPPos, s.length()).isEmpty()))
+//            if (!s.substring(prevClosePPos, s.length()).isEmpty())
+            if (((s.indexOf("(", prevClosePPos)) != -1) && (!s.substring(prevClosePPos, s.indexOf("(", prevClosePPos)).isEmpty()))
+                result.append(s.substring(prevClosePPos, s.indexOf("(", prevClosePPos)));
+
+        } while ((openPPos = s.indexOf("(", prevClosePPos)) != -1);  // end do while
 
         return result.toString();
     }
 
+    public Optional<MatchParens> processStringForNestedParens(String s, int startSearchPos) {
+        int nextOpenPPos = s.indexOf("(", startSearchPos + 1);
+        int closePPos = s.indexOf(")", startSearchPos);
+        if ((nextOpenPPos != -1) && (nextOpenPPos < closePPos)) {
+            // isNested = true
+            return Optional.of(new MatchParens(s, nextOpenPPos, true));
+        }
+        return Optional.of(new MatchParens(s, startSearchPos, false));
+    }
+
     /**
-     * finds the matching closing parenthesis position
-     * edge case is considered when no closing parenthesis exists, hence Option.isEmpty()
+     * Given that the startSearchPos is either 0 or the char of an open paren; this methods finds
+     * the matching closing paren position and reverses the chars between the parentheses.
+     * <p>
+     * NOTE:  The calling method has to determine the open paren position.
+     * NOTE:  The calling method has to account for nested parens and set isNested to true.
      *
-     * @param searchString - obvious
-     * @param startPos     - open parenthesis position
-     * @param isNested     - denotes the parens are the outermost parens in a nested scenario
      * @return - obvious
      */
-    private Optional<MatchParens> findMatchingCloseParenPos(String searchString, int startPos, boolean isNested) {
+    public Optional<MatchParens> findMatchingCloseParenAndReverse(MatchParens matchParens) {
         int nextOpenPPos;
         int closePPos;
-        if (isNested) {
-            // search backwards
-            nextOpenPPos = searchString.lastIndexOf("(", startPos);
-            // skip over the next close paren and get the second one
-            int skipClose = searchString.indexOf(")", startPos);
-            closePPos = searchString.indexOf(")", skipClose + 1);
-            // NOW we need to set searchPos, in the while loop to look after the closePPos
-        } else {
-            nextOpenPPos = searchString.indexOf("(", startPos + 1);
-            closePPos = searchString.indexOf(")", startPos);
-        }
+        if (matchParens.isNested()) {
+            // search backwards, find the outermost enclosing parens
+            int nestedOpenPPos = matchParens.startSearchPos();
+            closePPos = matchParens.reversed().indexOf(")", matchParens.startSearchPos() + 1);
 
-        if (closePPos == -1) {
-            String msg = "No Matching Close Parenthesis for Open Paren at " + nextOpenPPos;
-            return Optional.empty();
+            String reversed = reverseStringBetweenParens(matchParens.reversed(), nestedOpenPPos, closePPos).orElse("NOT FOUND");
+            return Optional.of(new MatchParens(reversed, matchParens.reversed().lastIndexOf("(", matchParens.startSearchPos()), false));
         }
+        // nominal case, no nesting
+        /// nextOpenPPos = matchParens.reversed().indexOf("(", matchParens.startSearchPos()+1);
+        closePPos = matchParens.reversed().indexOf(")", matchParens.startSearchPos());
 
-        if ((nextOpenPPos != -1) && (nextOpenPPos < closePPos) && (!isNested)) {
-//            // TODO nested parens case,
-//           // Now we need to find the inner parens first than the outer and put them in the map in that order
-//            // so on the second (outer) pass, we need to ignore the inner parens
-//            // ADDED, isNested to MatchParens Record
-//
-            System.out.println("Detected nested parentheses, closing pos " + closePPos);
-            MatchParens matchParens = new MatchParens(nextOpenPPos, closePPos, true);
-            return Optional.of(matchParens);
-        } else {
-            MatchParens matchParens = new MatchParens(startPos, closePPos, false);
-            return Optional.of(matchParens);
-        }
+        String reversed = reverseStringBetweenParens(matchParens.reversed(), matchParens.startSearchPos(), closePPos).orElse("NOT FOUND");
+        return Optional.of(new MatchParens(reversed, closePPos + 1, false));
+    }
+
+    private Optional<String> reverseStringBetweenParens(String s, int openPPos, int closePPos) {
+        String revSegment = new StringBuilder(s.substring(openPPos + 1, closePPos))
+                .reverse()
+                .toString();
+        return Optional.of(revSegment);
     }
 }

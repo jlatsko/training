@@ -407,16 +407,49 @@ class ListToMap {
     }
 
     @Test
-    public void reverseChars() throws ParseException {
+    public void findMatchingCloseParen() {
         CodeSignal cs = new CodeSignal();
 
         String s1 = "(bar)";
         String s1Expected = "rab";
-        assertEquals(s1Expected, cs.reverseCharsInParentheses(s1));
+        Optional<MatchParens> expectedMP = Optional.of(new MatchParens(s1Expected, 5, false));
+        Optional<MatchParens> actualMP = cs.findMatchingCloseParenAndReverse(new MatchParens(s1, 0, false));
+        assertEquals(expectedMP, actualMP);
 
         String s2 = "foo(bar)baz";
-        String s2Expected = "foorabbaz";
-        assertEquals(s2Expected, cs.reverseCharsInParentheses(s2));
+        String s2Expected = "rab";
+        Optional<MatchParens> expectedMP2 = Optional.of(new MatchParens(s2Expected, 8, false));
+        assertEquals(expectedMP2, cs.findMatchingCloseParenAndReverse(new MatchParens(s2, 3, false)));
+
+        String s3 = "foo(bar)baz(blim)";
+        Optional<MatchParens> expectedMP3 = Optional.of(new MatchParens("milb", 17, false));
+        // the expected result depends on where we set the startSearchPos. In this test we start 11, which is
+        // the second open paren. Then findMatchingCloseParenAndReverse
+        //  assumes startSearchPos starts on the open paren char position. The startSearchPos (response) expected result will
+        //  be the position of the closing paren + 1
+        assertEquals(expectedMP3, cs.findMatchingCloseParenAndReverse(new MatchParens(s3, 11, false)));
+
+        String s4 = "foo(bar(baz))blim";
+        Optional<MatchParens> expectedMP4 = Optional.of(new MatchParens("zab", 3, false));
+        // this test captures the intermediate result, foo(barzab)blim. Hence, we pass in isNested=true and startSearchPos
+        // is the position of the outer open paren.
+        assertEquals(expectedMP4, cs.findMatchingCloseParenAndReverse(new MatchParens(s4, 3, true)));
+    }
+
+    @Test
+    public void reverseChars() throws ParseException {
+        //  The method, reverseCharsInParentheses will start either on the 0 or on the char after the closing paren
+        //  Which is the result from findMatchingCloseParenAndReverse. Hence reverseCharsInParentheses is responsilbe
+        //  for setting isNested=true and
+        CodeSignal cs = new CodeSignal();
+
+//        String s1 = "(bar)";
+//        String s1Expected = "rab";
+//        assertEquals(s1Expected, cs.reverseCharsInParentheses(s1));
+
+//        String s2 = "foo(bar)baz";
+//        String s2Expected = "foorabbaz";
+//        assertEquals(s2Expected, cs.reverseCharsInParentheses(s2));
 
 //        String s4 = "foo(bar)baz(blim)";
 //        String s4Expected = "foorabbazmilb";
