@@ -1,9 +1,7 @@
 package com.jim.codility;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -71,5 +69,19 @@ public class Codility {
         return positions
                 .mapToInt(x -> x)
                 .toArray();
+    }
+
+    public int findFirstUnique(int[] ar) {
+        for (int idx=0; idx != ar.length; idx++) {
+            final int searchInt = ar[idx];
+            // remove searchInt from ar
+            int[] removedIt = Arrays.copyOfRange(ar, 0, idx);
+            removedIt = Arrays.copyOfRange(ar, idx+1, ar.length-1);
+
+            OptionalInt optionalInt = Arrays.stream(removedIt).filter(el -> el == searchInt).findAny();
+            if (optionalInt.isEmpty())
+                return searchInt;
+        }
+        return -1;
     }
 }

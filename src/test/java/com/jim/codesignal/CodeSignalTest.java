@@ -256,7 +256,7 @@ public class CodeSignalTest {
                 endIdx++;
             }
         }
-        assertThat(commonC).isEqualTo(4);
+        assertThat(commonC.size()).isEqualTo(4);
     }
 
     public Integer calculateAvg(List<Integer> values) {
@@ -413,31 +413,30 @@ class ListToMap {
     public void findMatchingCloseParen() {
         CodeSignal cs = new CodeSignal();
 
-//        String s1 = "(bar)";
-//        String s1Expected = "rab";
-//        Optional<MatchParens> expectedMP = Optional.of(new MatchParens(s1Expected, 5, false));
-//        Optional<MatchParens> actualMP = cs.findMatchingCloseParenAndReverse(new MatchParens(s1, 0, false));
-//        assertEquals(expectedMP, actualMP);
+        String s1 = "(bar)";
+        String s1Expected = "rab";
+        Optional<MatchParens> expectedMP = Optional.of(new MatchParens(s1Expected, 5, false));
+        Optional<MatchParens> actualMP = cs.findMatchingCloseParenAndReverse(new MatchParens(s1, 0, false));
+        assertEquals(expectedMP, actualMP);
 
         String s2 = "foo(bar)baz";
         String s2Expected = "rab";
         Optional<MatchParens> expectedMP2 = Optional.of(new MatchParens(s2Expected, 8, false));
         assertEquals(expectedMP2, cs.findMatchingCloseParenAndReverse(new MatchParens(s2, 3, false)));
 
-//        String s3 = "foo(bar)baz(blim)";
-//        Optional<MatchParens> expectedMP3 = Optional.of(new MatchParens("milb", 17, false));
+        String s3 = "foo(bar)baz(blim)";
+        Optional<MatchParens> expectedMP3 = Optional.of(new MatchParens("milb", 17, false));
         // the expected result depends on where we set the startSearchPos. In this test we start 11, which is
         // the second open paren. Then findMatchingCloseParenAndReverse
         //  assumes startSearchPos starts on the open paren char position. The startSearchPos (response) expected result will
         //  be the position of the closing paren + 1
-//        assertEquals(expectedMP3, cs.findMatchingCloseParenAndReverse(new MatchParens(s3, 11, false)));
+        assertEquals(expectedMP3, cs.findMatchingCloseParenAndReverse(new MatchParens(s3, 11, false)));
 
-//        String s4 = "foo(bar(baz))blim";
-//        Optional<MatchParens> expectedMP4 = Optional.of(new MatchParens("zab", 12, true));
-
+        String s4 = "foo(bar(baz))blim";
+        Optional<MatchParens> expectedMP4 = Optional.of(new MatchParens("barzab", 12, false));
         // this test captures the intermediate result, foo(barzab)blim. Hence, we pass in isNested=true and startSearchPos
         // is the position of the outer open paren.
-//        assertEquals(expectedMP4, cs.findMatchingCloseParenAndReverse(new MatchParens(s4, 3, true)));
+        assertEquals(expectedMP4, cs.processNestedParensAndReverse(new MatchParens(s4, 3, true)));
     }
 
     @Test

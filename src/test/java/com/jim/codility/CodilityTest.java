@@ -103,4 +103,22 @@ public class CodilityTest {
         int[] result = codility.addShiftToEachArrayElement(ar, idx);
         assertThat(result).containsExactly(6, 11, 12, 10, 9);
     }
+
+    @Test
+    public void findFirstUniqueTest() {
+        codility = new Codility();
+        int[] A = { 4, 10,5,4,2,10};
+        codility.findFirstUnique(A);
+
+        int[] B = {1,4,3,3,1,2};
+        codility.findFirstUnique(B);
+
+        int[] C = {6,4,4,6};
+        codility.findFirstUnique(C);
+
+        // Write an efficient algorithm for the following assumptions:
+        //
+        //        N is an integer within the range [1..100,000];
+        //        each element of array A is an integer within the range [0..1,000,000,000].
+    }
 }
